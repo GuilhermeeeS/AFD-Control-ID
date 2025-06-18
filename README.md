@@ -1,5 +1,6 @@
 # 🕒 AFD Control ID
 
+<img align="center" alt="JavaScript" src="https://img.shields.io/badge/JavaScript-323330?style=for-the-badge&logo=javascript&logoColor=F7DF1E"/>
 <img align="center" alt="Node.js" src="https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white"/>
 
 - This repository contains a full-stack system to **collect AFD files (Arquivo Fonte de Dados)** from multiple Control iD time clocks on the same internal network.
