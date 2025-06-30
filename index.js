@@ -1,4 +1,3 @@
-require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -7,20 +6,59 @@ const { spawnSync } = require('child_process');
 const app = express();
 const PORT = 3000;
 
+const publicDir = path.join(__dirname, 'public');
+const ipsFile = path.join(__dirname, 'ips.json');
+
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(publicDir));
+
+function loadIPs() {
+  if (!fs.existsSync(ipsFile)) fs.writeFileSync(ipsFile, '[]');
+  return JSON.parse(fs.readFileSync(ipsFile));
+}
+
+function saveIPs(ips) {
+  fs.writeFileSync(ipsFile, JSON.stringify(ips, null, 2));
+}
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(publicDir, 'index.html'));
 });
 
-const ips = ['10.119.82.31', '10.119.82.32']; 
+app.get('/api/ips', (req, res) => {
+  const ips = loadIPs();
+  res.json(ips);
+});
 
-app.post('/api/afd', async (req, res) => {
+app.post('/api/add-ip', (req, res) => {
+  const { ip } = req.body;
+  if (!ip) return res.status(400).json({ error: 'IP é obrigatório' });
+
+  const ips = loadIPs();
+  if (ips.find(item => item.ip === ip)) {
+    return res.status(400).json({ error: 'IP já cadastrado' });
+  }
+
+  ips.push({ ip });
+  saveIPs(ips);
+  res.json({ message: 'IP adicionado com sucesso', ip });
+});
+
+app.post('/api/remove-ip', (req, res) => {
+  const { ip } = req.body;
+  if (!ip) return res.status(400).json({ error: 'IP é obrigatório' });
+
+  const updated = loadIPs().filter(item => item.ip !== ip);
+  saveIPs(updated);
+  res.json({ message: 'IP removido com sucesso' });
+});
+
+app.post('/api/afd', (req, res) => {
   const { date } = req.body;
   if (!date) return res.status(400).json({ error: 'Data é obrigatória' });
 
   const [year, month, day] = date.split('-').map(Number);
+  const ips = loadIPs().map(obj => obj.ip);
   const arquivos = [];
 
   for (const ip of ips) {
@@ -49,14 +87,14 @@ app.post('/api/afd', async (req, res) => {
 
       const afdOutput = afd.stdout.toString();
       const filename = `afd_${ip.replace(/\./g, '_')}.txt`;
-      const filePath = path.join(__dirname, 'public', filename);
+      const filePath = path.join(publicDir, filename);
 
       fs.writeFileSync(filePath, afdOutput);
       arquivos.push(filename);
 
       console.log(`✅ AFD salvo: ${filename}`);
     } catch (err) {
-      console.error(`❌ Erro no IP ${ip}:`, err.message);
+      console.error(`❌ Erro ao coletar do IP ${ip}:`, err.message);
     }
   }
 
@@ -64,7 +102,7 @@ app.post('/api/afd', async (req, res) => {
 });
 
 app.get('/downloads/:filename', (req, res) => {
-  const file = path.join(__dirname, 'public', req.params.filename);
+  const file = path.join(publicDir, req.params.filename);
   res.download(file, err => {
     if (!err) {
       fs.unlink(file, () => console.log(`🧹 Arquivo deletado: ${req.params.filename}`));

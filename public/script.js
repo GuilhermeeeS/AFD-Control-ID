@@ -1,39 +1,75 @@
-$(document).ready(function () {
-  $('#buscar').on('click', function () {
-    const data = $('#data').val();
+const lista = document.getElementById('lista');
+const form = document.getElementById('form-ip');
+const input = document.getElementById('ip');
+const dataInput = document.getElementById('data');
+const arquivosDiv = document.getElementById('arquivos-gerados');
 
-    if (!data) {
-      alert('Por favor, selecione uma data.');
-      return;
-    }
+async function carregarIPs() {
+  const res = await fetch('/api/ips');
+  const ips = await res.json();
 
-    $('#resultado').text('🔄 Buscando AFDs em todos os relógios...');
+  lista.innerHTML = '';
+  ips.forEach(({ ip }) => {
+    const li = document.createElement('li');
+    
+    const span = document.createElement('span');
+    span.textContent = ip;
 
-    fetch('/api/afd', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date: data })
-    })
-      .then(res => res.json())
-      .then(({ arquivos }) => {
-        if (!arquivos || arquivos.length === 0) {
-          $('#resultado').text('⚠️ Nenhum AFD encontrado.');
-          return;
-        }
+    const button = document.createElement('button');
+    button.textContent = '❌';
+    button.className = 'remover-btn';
+    button.onclick = () => removerIP(ip);
 
-        arquivos.forEach(nome => {
-          const a = document.createElement('a');
-          a.href = `/downloads/${nome}`;
-          a.download = nome;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        });
-
-        $('#resultado').text(`✅ ${arquivos.length} arquivos AFD baixados.`);
-      })
-      .catch(err => {
-        $('#resultado').text('❌ Erro: ' + err.message);
-      });
+    li.appendChild(span);
+    li.appendChild(button);
+    lista.appendChild(li);
   });
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const ip = input.value.trim();
+  if (!ip) return;
+
+  await fetch('/api/add-ip', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ip })
+  });
+
+  input.value = '';
+  carregarIPs();
 });
+
+async function removerIP(ip) {
+  await fetch('/api/remove-ip', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ip })
+  });
+
+  carregarIPs();
+}
+
+async function coletarAFD() {
+  const date = dataInput.value;
+  if (!date) return alert('Informe a data!');
+
+  const res = await fetch('/api/afd', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ date })
+  });
+
+  const { arquivos } = await res.json();
+
+  arquivosDiv.innerHTML = '<h3>📂 Arquivos gerados:</h3>';
+  arquivos.forEach(arq => {
+    const link = document.createElement('a');
+    link.href = `/downloads/${arq}`;
+    link.innerText = arq;
+    arquivosDiv.appendChild(link);
+  });
+}
+
+carregarIPs();

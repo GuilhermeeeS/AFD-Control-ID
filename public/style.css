@@ -1,61 +1,188 @@
+:root {
+  --primary-color: #007bff;
+  --danger-color: #dc3545;
+  --light-bg: #f8f9fa;
+  --dark-text: #343a40;
+}
+
 body {
   font-family: 'Segoe UI', sans-serif;
-  background-color: #f0f2f5;
-  display: flex;
-  justify-content: center;
-  padding-top: 80px;
+  background-color: var(--light-bg);
+  padding: 2rem;
+  color: var(--dark-text);
 }
 
 .container {
-  background-color: white;
-  padding: 30px;
+  background: #fff;
+  padding: 2rem;
   border-radius: 12px;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
-  width: 400px;
+  max-width: 600px;
+  margin: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 h1 {
-  font-size: 24px;
-  margin-bottom: 20px;
   text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  color: var(--primary-color);
 }
 
-label {
-  display: block;
-  margin-bottom: 8px;
+/* Botões de navegação e configuração */
+.config-btn {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.config-btn a {
+  text-decoration: none;
+  background-color: #6c757d;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 8px;
   font-weight: bold;
+  transition: background 0.2s ease;
 }
 
-input[type="date"] {
-  width: 95%;
+.config-btn a:hover {
+  background-color: #5a6268;
+}
+
+/* Seção de coleta */
+.afd-section {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.afd-section input[type="date"] {
+  flex: 1;
   padding: 10px;
-  margin-bottom: 15px;
+  font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 8px;
 }
 
-button {
-  width: 100%;
-  padding: 10px;
-  background-color: #007bff;
+.afd-section button {
+  flex-shrink: 0;
+  background-color: var(--primary-color);
   color: white;
   border: none;
   border-radius: 8px;
-  cursor: pointer;
+  padding: 10px 16px;
   font-weight: bold;
-  transition: background-color 0.3s;
+  cursor: pointer;
+  transition: background 0.2s ease;
 }
 
-button:hover {
+.afd-section button:hover {
   background-color: #0056b3;
 }
 
-pre {
-  margin-top: 20px;
-  background: #f4f4f4;
+/* Lista e formulário de IPs (usado em config.html) */
+form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+input[type="text"] {
+  flex: 1;
   padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+/* Classe reutilizável para inputs grandes (como login) */
+.input-grande {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  margin-bottom: 1rem;
+}
+
+button[type="submit"] {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+button[type="submit"]:hover {
+  background-color: #0056b3;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  background: #f1f1f1;
+  margin-bottom: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+li span {
+  flex-grow: 1;
+  font-size: 1rem;
+  color: #333;
+  word-break: break-word;
+}
+
+li button {
+  background-color: var(--danger-color);
+  color: white;
+  font-size: 0.9rem;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   border-radius: 6px;
-  font-size: 14px;
-  overflow-x: auto;
-  max-height: 300px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  line-height: 1;
+  transition: background 0.2s ease;
+}
+
+li button:hover {
+  background-color: #a81f2d;
+}
+
+/* Arquivos gerados (index) */
+#arquivos-gerados {
+  margin-top: 20px;
+}
+
+#arquivos-gerados h3 {
+  margin-bottom: 10px;
+  color: var(--primary-color);
+}
+
+#arquivos-gerados a {
+  display: block;
+  margin-top: 6px;
+  text-decoration: none;
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+#arquivos-gerados a:hover {
+  text-decoration: underline;
 }

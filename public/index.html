@@ -2,18 +2,32 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Relógio de Ponto - AFD</title>
+  <title>Sistema de AFD</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
-    <h1>Baixar AFD por Data</h1>
-    <label for="data">Selecione a data:</label>
-    <input type="date" id="data">
-    <button id="buscar">Buscar AFD</button>
-    <pre id="resultado">Resultado</pre>
+    <h1>📅 Coletar AFD</h1>
+
+    <div class="afd-section">
+      <input type="date" id="data" required>
+      <button onclick="coletarAFD()">Coletar AFD</button>
+    </div>
+
+    <div id="arquivos-gerados"></div>
+
+    <hr style="margin: 2rem 0;">
+
+    <h2>📍 IPs cadastrados</h2>
+
+    <form id="form-ip">
+      <input type="text" id="ip" placeholder="Digite o IP" required>
+      <button type="submit">Adicionar IP</button>
+    </form>
+
+    <ul id="lista"></ul>
   </div>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
   <script src="script.js"></script>
 </body>
 </html>
