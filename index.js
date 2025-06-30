@@ -7,26 +7,39 @@ const app = express();
 const PORT = 3000;
 
 const publicDir = path.join(__dirname, 'public');
+const loginDir = path.join(__dirname, 'login');
 const ipsFile = path.join(__dirname, 'ips.json');
 
 app.use(express.json());
-app.use(express.static(publicDir));
 
-function loadIPs() {
-  if (!fs.existsSync(ipsFile)) fs.writeFileSync(ipsFile, '[]');
-  return JSON.parse(fs.readFileSync(ipsFile));
-}
-
-function saveIPs(ips) {
-  fs.writeFileSync(ipsFile, JSON.stringify(ips, null, 2));
-}
-
+// 1️⃣ Rota padrão → tela de login (login.html)
 app.get('/', (req, res) => {
+  res.sendFile(path.join(loginDir, 'login.html'));
+});
+
+// 2️⃣ Rota de login.js e login.css (estáticos)
+app.use('/login', express.static(loginDir));
+
+// 3️⃣ Rota da home real (depois do login)
+app.get('/home', (req, res) => {
   res.sendFile(path.join(publicDir, 'index.html'));
 });
 
+// 4️⃣ Depois sim libera os arquivos da public/
+app.use(express.static(publicDir));
+
+// 5️⃣ APIs
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+  if (username === 'admin' && password === '123456') {
+    return res.status(200).json({ message: 'Login ok' });
+  }
+  return res.status(401).json({ error: 'Usuário ou senha inválidos' });
+});
+
 app.get('/api/ips', (req, res) => {
-  const ips = loadIPs();
+  if (!fs.existsSync(ipsFile)) fs.writeFileSync(ipsFile, '[]');
+  const ips = JSON.parse(fs.readFileSync(ipsFile));
   res.json(ips);
 });
 
@@ -34,23 +47,22 @@ app.post('/api/add-ip', (req, res) => {
   const { ip } = req.body;
   if (!ip) return res.status(400).json({ error: 'IP é obrigatório' });
 
-  const ips = loadIPs();
+  const ips = JSON.parse(fs.readFileSync(ipsFile));
   if (ips.find(item => item.ip === ip)) {
     return res.status(400).json({ error: 'IP já cadastrado' });
   }
 
   ips.push({ ip });
-  saveIPs(ips);
-  res.json({ message: 'IP adicionado com sucesso', ip });
+  fs.writeFileSync(ipsFile, JSON.stringify(ips, null, 2));
+  res.json({ message: 'IP adicionado', ip });
 });
 
 app.post('/api/remove-ip', (req, res) => {
   const { ip } = req.body;
-  if (!ip) return res.status(400).json({ error: 'IP é obrigatório' });
-
-  const updated = loadIPs().filter(item => item.ip !== ip);
-  saveIPs(updated);
-  res.json({ message: 'IP removido com sucesso' });
+  const ips = JSON.parse(fs.readFileSync(ipsFile));
+  const updated = ips.filter(item => item.ip !== ip);
+  fs.writeFileSync(ipsFile, JSON.stringify(updated, null, 2));
+  res.json({ message: 'Removido' });
 });
 
 app.post('/api/afd', (req, res) => {
@@ -58,13 +70,11 @@ app.post('/api/afd', (req, res) => {
   if (!date) return res.status(400).json({ error: 'Data é obrigatória' });
 
   const [year, month, day] = date.split('-').map(Number);
-  const ips = loadIPs().map(obj => obj.ip);
+  const ips = JSON.parse(fs.readFileSync(ipsFile)).map(obj => obj.ip);
   const arquivos = [];
 
   for (const ip of ips) {
     try {
-      console.log(`🔐 Conectando no relógio ${ip}...`);
-
       const login = spawnSync('curl', [
         '-k', '-s', '-X', 'POST',
         '-H', 'Content-Type: application/json',
@@ -91,10 +101,8 @@ app.post('/api/afd', (req, res) => {
 
       fs.writeFileSync(filePath, afdOutput);
       arquivos.push(filename);
-
-      console.log(`✅ AFD salvo: ${filename}`);
     } catch (err) {
-      console.error(`❌ Erro ao coletar do IP ${ip}:`, err.message);
+      console.error(`Erro no IP ${ip}:`, err.message);
     }
   }
 
@@ -105,7 +113,7 @@ app.get('/downloads/:filename', (req, res) => {
   const file = path.join(publicDir, req.params.filename);
   res.download(file, err => {
     if (!err) {
-      fs.unlink(file, () => console.log(`🧹 Arquivo deletado: ${req.params.filename}`));
+      fs.unlink(file, () => console.log(`🧹 Deletado: ${req.params.filename}`));
     }
   });
 });
