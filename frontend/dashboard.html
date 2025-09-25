@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Dashboard - Relógio</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+  <input type="date" id="date" />
+  <button id="downloadAll">Baixar AFDs</button>
+  <button id="gotoConfig">Configurar dispositivos</button>
+  <div id="log" style="white-space:pre-wrap;margin-top:10px;"></div>
+  </div>
+<script>
+function getSession() { return sessionStorage.getItem('session'); }
+if (!getSession()) location = '/login.html';
+
+async function api(path, opts = {}) {
+  opts.headers = opts.headers || {};
+  if (!opts.headers['Content-Type'] && !(opts.body instanceof FormData)) {
+    opts.headers['Content-Type'] = 'application/json';
+  }
+  opts.headers['x-session'] = getSession();
+  return fetch(path, opts);
+}
+
+async function downloadForDevice(device, dateVal) {
+  const res = await api('/api/fetch-afd', {
+    method: 'POST',
+    body: JSON.stringify({ ip: device.ip, serial: device.serial, date: dateVal })
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(txt || 'erro');
+  }
+  const disposition = res.headers.get('content-disposition') || '';
+  const filenameMatch = disposition.match(/filename="?(.+?)"?$/);
+  const filename = filenameMatch ? filenameMatch[1] : `AFD${device.serial}.txt`;
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('downloadAll').addEventListener('click', async () => {
+  const dateVal = document.getElementById('date').value;
+  if (!dateVal) { alert('seleciona data'); return; }
+  const logEl = document.getElementById('log');
+  logEl.textContent = 'Iniciando...';
+  try {
+    const devRes = await api('/api/devices', { method: 'GET' });
+    if (!devRes.ok) throw new Error('erro ao recuperar devices');
+    const devJson = await devRes.json();
+    for (const d of devJson.devices) {
+      logEl.textContent = `baixando ${d.ip}...`;
+      try {
+        await downloadForDevice(d, dateVal);
+        logEl.textContent = `baixado ${d.ip}`;
+      } catch (err) {
+        logEl.textContent = `erro ${d.ip}: ${err.message}`;
+      }
+      await new Promise(r => setTimeout(r, 500));
+    }
+    logEl.textContent = 'Finalizado';
+  } catch (err) {
+    document.getElementById('log').textContent = 'erro: ' + err.message;
+  }
+});
+
+document.getElementById('gotoConfig').addEventListener('click', () => location = '/config.html');
+</script>
+</body>
+</html>

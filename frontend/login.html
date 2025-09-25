@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Login - Relógio</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+  <form id="loginForm">
+    <input id="username" placeholder="usuario" value="admin" required />
+    <input id="password" type="password" placeholder="senha" required />
+    <button type="submit">Entrar</button>
+    </div>
+  </form>
+
+<script>
+async function sha256Hex(str) {
+  const enc = new TextEncoder();
+  const data = enc.encode(str);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  const bytes = new Uint8Array(hash);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const user = document.getElementById('username').value;
+  const pass = document.getElementById('password').value;
+  const passHash = await sha256Hex(pass);
+  const res = await fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: user, passwordHash: passHash })
+  });
+  if (res.ok) {
+    const data = await res.json();
+    sessionStorage.setItem('session', data.session);
+    location = '/dashboard.html';
+  } else {
+    alert('login falhou');
+  }
+});
+</script>
+</body>
+</html>

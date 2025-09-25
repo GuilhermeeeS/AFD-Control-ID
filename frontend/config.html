@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Config - Dispositivos</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div>
+    <div class="container">
+    <input id="ip" placeholder="IP" />
+    <input id="serial" placeholder="Serial" />
+    <button id="add">Adicionar</button>
+    </div>
+  </div>
+  <ul id="list"></ul>
+  <button id="back">Voltar</button>
+
+<script>
+function getSession() { return sessionStorage.getItem('session'); }
+if (!getSession()) location = '/login.html';
+
+async function api(path, opts = {}) {
+  opts.headers = opts.headers || {};
+  if (!opts.headers['Content-Type'] && !(opts.body instanceof FormData)) {
+    opts.headers['Content-Type'] = 'application/json';
+  }
+  opts.headers['x-session'] = getSession();
+  return fetch(path, opts);
+}
+
+async function refresh() {
+  const res = await api('/api/devices', { method: 'GET' });
+  if (!res.ok) { alert('erro ao buscar devices'); return; }
+  const data = await res.json();
+  const ul = document.getElementById('list');
+  ul.innerHTML = '';
+  for (const d of data.devices) {
+    const li = document.createElement('li');
+    li.textContent = `${d.ip} — ${d.serial} `;
+    const btn = document.createElement('button');
+    btn.textContent = 'Remover';
+    btn.onclick = async () => {
+      await api('/api/devices/remove', { method: 'POST', body: JSON.stringify({ ip: d.ip }) });
+      await refresh();
+    };
+    li.appendChild(btn);
+    ul.appendChild(li);
+  }
+}
+
+document.getElementById('add').addEventListener('click', async () => {
+  const ip = document.getElementById('ip').value.trim();
+  const serial = document.getElementById('serial').value.trim();
+  if (!ip || !serial) return alert('preencha ip e serial');
+  const res = await api('/api/devices/add', { method: 'POST', body: JSON.stringify({ ip, serial }) });
+  if (!res.ok) {
+    const txt = await res.text();
+    return alert('erro: ' + txt);
+  }
+  document.getElementById('ip').value = '';
+  document.getElementById('serial').value = '';
+  await refresh();
+});
+
+document.getElementById('back').addEventListener('click', () => location = '/dashboard.html');
+
+refresh();
+</script>
+</body>
+</html>
