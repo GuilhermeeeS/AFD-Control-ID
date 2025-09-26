@@ -2,38 +2,49 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const session = require('express-session');
+const FileStore = require('session-file-store')(session);
 const { fetchAFD } = require('./fetchAFD');
 const appConfig = require('./config/app.json');
 
 const app = express();
 app.use(express.json());
 
+// configure express-session + file-store
+app.use(session({
+  store: new FileStore({ path: path.join(__dirname, 'sessions') }),
+  secret: 'segredo-super-secreto', // pode ser qualquer string
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 1000 * 60 * 60 } // 1 hora
+}));
+
 // serve frontend
 app.use('/css', express.static(path.join(__dirname, '../frontend/css')));
-
 app.use(express.static(path.join(__dirname, '../frontend')));
+
 const devicesFile = path.join(__dirname, 'devices.json');
 
 // SHA-256('14e13y5a')
 const STORED_HASH = 'f53101f688a218ba277be23863c56cdb1684a4a193eadc8e5fc5b0f4979d17a4';
-const sessions = {}; 
 
-app.post('/api/login', (req, res) => {
+// login
+app.post('/api/login', async (req, res) => {
   const { username, passwordHash } = req.body || {};
   if (username === 'admin' && passwordHash === STORED_HASH) {
-    const sessionId = crypto.randomBytes(16).toString('hex');
-    sessions[sessionId] = { user: 'admin', created: Date.now() };
-    return res.json({ success: true, session: sessionId });
+    req.session.user = 'admin';
+    return res.json({ success: true });
   }
   return res.status(401).json({ success: false });
 });
 
+// middleware de sessão
 function requireSession(req, res, next) {
-  const sessionId = req.headers['x-session'];
-  if (sessionId && sessions[sessionId]) return next();
+  if (req.session?.user === 'admin') return next();
   return res.status(401).json({ success: false, message: 'no session' });
 }
 
+// rotas
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/login.html'));
 });
