@@ -25,7 +25,6 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 
 const devicesFile = path.join(__dirname, 'devices.json');
 
-// SHA-256('14e13y5a')
 const STORED_HASH = 'f53101f688a218ba277be23863c56cdb1684a4a193eadc8e5fc5b0f4979d17a4';
 
 // login
