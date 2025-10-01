@@ -13,7 +13,7 @@ app.use(express.json());
 // configure express-session + file-store
 app.use(session({
   store: new FileStore({ path: path.join(__dirname, 'sessions') }),
-  secret: 'segredo-super-secreto', // pode ser qualquer string
+  secret: 'secret', // pode ser qualquer string
   resave: false,
   saveUninitialized: false,
   cookie: { maxAge: 1000 * 60 * 60 } // 1 hora
